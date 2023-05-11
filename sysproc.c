@@ -89,3 +89,30 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+int
+sys_date(void)
+{
+    struct rtcdate *r;
+    if(argptr(0, (void*)&r, sizeof(struct rtcdate)) < 0)
+        return -1;
+    cmostime(r);
+    return 0;
+}
+
+//int
+//sys_alarm(void)
+//{
+//    int interval;
+//    void (*handler)(void);
+//
+//    if(argint(0, &interval) < 0)
+//        return -1;
+//    if(argptr(1, (char **)&handler, 1) < 0)
+//        return -1;
+//
+//    myproc()->alarminterval = interval;
+//    myproc()->alarmhandler = handler;
+//    return 0;
+//
+//}
