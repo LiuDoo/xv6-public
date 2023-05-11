@@ -183,6 +183,7 @@ UPROGS=\
 	_zombie\
 	_copy\
 	_date\
+	_alarmtest\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
