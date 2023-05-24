@@ -369,11 +369,15 @@ iunlockput(struct inode *ip)
 
 // Return the disk block address of the nth block in inode ip.
 // If there is no such block, bmap allocates one.
+//Note :map the file logic number to disk block number
+//ip->addrs[0:10] direct block
+//ip->addrs[11] indirect block
+//ip->addrs[12] double indirect block
 static uint
 bmap(struct inode *ip, uint bn)
 {
   uint addr, *a;
-  struct buf *bp;
+  struct buf *bp,*bp_2;
 
   if(bn < NDIRECT){
     if((addr = ip->addrs[bn]) == 0)
@@ -393,6 +397,33 @@ bmap(struct inode *ip, uint bn)
       log_write(bp);
     }
     brelse(bp);
+    return addr;
+  }
+  
+  bn-=NINDIRECT;
+
+  if(bn<NDINDIRECT){
+    //Load double indirect block,alloc if necessary
+    if((addr=ip->addrs[NDIRECT+1])==0){
+      ip->addrs[NDIRECT+1]=addr=balloc(ip->dev);
+    }
+    bp=bread(ip->dev,addr); //first stage
+    a=(uint*)bp->data;
+    //get second stage
+    uint second_stage=bn/NINDIRECT;
+    if((addr=a[second_stage])==0){
+      a[second_stage]=addr=balloc(ip->dev);
+      log_write(bp);
+    }
+    bp_2=bread(ip->dev,addr); //second stage
+    a=(uint*)bp_2->data;
+    uint third_stage=bn%NINDIRECT;
+    if((addr=a[third_stage])==0){
+      a[third_stage]=addr=balloc(ip->dev);
+      log_write(bp_2);
+    }
+    brelse(bp);
+    brelse(bp_2);
     return addr;
   }
 
